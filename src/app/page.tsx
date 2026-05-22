@@ -81,7 +81,7 @@ export default function Home() {
 
   if (isStarted) {
     return (
-      <main className="relative flex-1 w-full h-full bg-black overflow-hidden">
+      <main className="relative flex-1 w-full h-full bg-transparent overflow-hidden">
         <ARSceneContainer />
         <CyberDashboard />
       </main>

@@ -172,7 +172,7 @@ export default function CyberDashboard() {
   } as React.CSSProperties;
 
   return (
-    <div style={themeStyle} className="absolute inset-0 z-10 pointer-events-none flex flex-col justify-between p-4 font-mono select-none">
+    <div style={themeStyle} className="absolute inset-0 z-10 pointer-events-none flex flex-col justify-between pt-4 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] font-mono select-none">
       {/* FLASH SCREEN EFFECT */}
       {flashActive && (
         <div className="absolute inset-0 bg-white pointer-events-none z-50 animate-fade-out" />
@@ -388,7 +388,12 @@ export default function CyberDashboard() {
         {/* ACCESSORY HORIZONTAL CATALOG */}
         <div className="bg-slate-950/70 border border-slate-900/60 rounded-xl p-3 backdrop-blur-md shadow-md flex flex-col gap-2">
           <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">GEAR_CHAMBER_LOADOUT</span>
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+          <div 
+            className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent touch-pan-x"
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
+          >
             {ACCESSORIES.map((item) => {
               const active = selectedAccessory === item.id;
               return (
@@ -419,7 +424,12 @@ export default function CyberDashboard() {
       {/* WEBXR DIAGNOSTICS SLIDE DRAWER */}
       {isWebXROpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm pointer-events-auto flex items-center justify-end">
-          <div className="w-full max-w-md h-full bg-slate-950 border-l border-[var(--theme-glow-50)] p-6 overflow-y-auto flex flex-col gap-6 font-mono text-xs text-slate-300 shadow-[0_0_40px_rgba(0,0,0,0.8)] animate-slide-in-right">
+          <div 
+            className="w-full max-w-md h-full bg-slate-950 border-l border-[var(--theme-glow-50)] p-6 overflow-y-auto flex flex-col gap-6 font-mono text-xs text-slate-300 shadow-[0_0_40px_rgba(0,0,0,0.8)] animate-slide-in-right"
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
+          >
             
             {/* Drawer Header */}
             <div className="flex items-center justify-between border-b border-slate-800 pb-4">

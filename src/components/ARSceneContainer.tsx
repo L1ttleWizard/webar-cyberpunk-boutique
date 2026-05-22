@@ -51,6 +51,7 @@ export default function ARSceneContainer() {
 
   const [scriptsLoaded, setScriptsLoaded] = useState(false);
   const sceneRef = useRef<any>(null);
+  const targetRef = useRef<any>(null);
 
   // Initialize scripts and custom A-Frame components
   useEffect(() => {
@@ -74,6 +75,10 @@ export default function ARSceneContainer() {
           registerCustomComponents();
           setScriptsLoaded(true);
           dispatch(setCameraState('ready'));
+
+          // Make body and html transparent to expose the background video stream
+          document.documentElement.style.backgroundColor = 'transparent';
+          document.body.style.backgroundColor = 'transparent';
         }
       } catch (err) {
         console.error('Failed to load AR script resources:', err);
@@ -88,8 +93,43 @@ export default function ARSceneContainer() {
     return () => {
       active = false;
       cleanupAR();
+      // Restore default backgrounds on unmount
+      document.documentElement.style.backgroundColor = '';
+      document.body.style.backgroundColor = '';
     };
   }, [dispatch]);
+
+  // Wire events for A-Frame targets using native listeners (avoiding React Synthetic events)
+  useEffect(() => {
+    const targetEl = targetRef.current;
+    if (!targetEl) return;
+
+    const handleFound = () => {
+      dispatch(setIsScanning(true));
+      if (isSoundEnabled) {
+        try {
+          soundPlayer.playSuccess();
+        } catch (_) {}
+      }
+    };
+
+    const handleLost = () => {
+      dispatch(setIsScanning(false));
+      if (isSoundEnabled) {
+        try {
+          soundPlayer.playError();
+        } catch (_) {}
+      }
+    };
+
+    targetEl.addEventListener('targetFound', handleFound);
+    targetEl.addEventListener('targetLost', handleLost);
+
+    return () => {
+      targetEl.removeEventListener('targetFound', handleFound);
+      targetEl.removeEventListener('targetLost', handleLost);
+    };
+  }, [scriptsLoaded, dispatch, isSoundEnabled]);
 
   // Handle direct DOM updates when configuration props change (avoiding React re-renders of <a-scene>)
   useEffect(() => {
@@ -113,16 +153,21 @@ export default function ARSceneContainer() {
     if (horns) horns.setAttribute('visible', selectedAccessory === 'horns');
     if (mask) mask.setAttribute('visible', selectedAccessory === 'mask');
 
-    // Update color on glowing elements
+    // Update color on glowing geometry elements (avoiding replacing the entire material component)
     const glowElements = document.querySelectorAll('.glow-element');
     glowElements.forEach((el: any) => {
-      // Get current material configuration or apply simple color changes
       const isEmissive = el.classList.contains('glow-emissive');
-      el.setAttribute('material', {
-        color: glowColor,
-        emissive: isEmissive ? glowColor : '#000000',
-        emissiveIntensity: isEmissive ? 1.0 : 0.0,
-      });
+      el.setAttribute('material', 'color', glowColor);
+      if (isEmissive) {
+        el.setAttribute('material', 'emissive', glowColor);
+        el.setAttribute('material', 'emissiveIntensity', '1.0');
+      }
+    });
+
+    // Update color on glowing text elements separately
+    const glowTexts = document.querySelectorAll('.glow-text');
+    glowTexts.forEach((el: any) => {
+      el.setAttribute('color', glowColor);
     });
 
     // Update the custom hologram face mesh properties
@@ -262,7 +307,7 @@ export default function ARSceneContainer() {
   }
 
   return (
-    <div className="absolute inset-0 w-full h-full overflow-hidden bg-black">
+    <div className="absolute inset-0 w-full h-full overflow-hidden bg-transparent">
       <a-scene
         ref={sceneRef}
         mindar-face="autoStart: true; faceOccluder: true; uiLoading: no; uiScanning: no;"
@@ -282,9 +327,8 @@ export default function ARSceneContainer() {
 
         {/* Face tracking target anchor at Index 168 (bridge of nose) */}
         <a-entity
+          ref={targetRef}
           mindar-face-target="anchorIndex: 168"
-          onTargetFound={handleTargetFound}
-          onTargetLost={handleTargetLost}
         >
           {/* Main container for scaling/offset transformations */}
           <a-entity id="accessory-container" position="0 0 0" scale="1.0 1.0 1.0">
@@ -420,7 +464,7 @@ export default function ARSceneContainer() {
                 value="[SYS_SCANNING]\nHUMAN_INDEX: 01"
                 position="-0.85 0.22 0.08"
                 scale="0.14 0.14 0.14"
-                class="glow-element"
+                class="glow-text"
                 color={glowColor}
                 font="monoid"
               ></a-text>
@@ -428,7 +472,7 @@ export default function ARSceneContainer() {
                 value="LOCK: READY\nSTABILITY: 99.8%"
                 position="0.38 0.22 0.08"
                 scale="0.14 0.14 0.14"
-                class="glow-element"
+                class="glow-text"
                 color={glowColor}
                 font="monoid"
               ></a-text>
