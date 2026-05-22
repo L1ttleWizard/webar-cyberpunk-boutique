@@ -112,3 +112,8 @@ body {
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background: var(--theme-glow, #22d3ee);
 }
+
+/* Prevent Tailwind preflight from shrinking/distorting the MindAR camera video feed */
+video {
+  max-width: none !important;
+}
